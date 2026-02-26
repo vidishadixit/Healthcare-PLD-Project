@@ -1,0 +1,11 @@
+hcp_id,name,specialty,region,tier
+HCP0090,Dr. B_1,Medical Oncology,North,Tier 2
+HCP0048,Dr. C_2,Surgical Oncology,South,Tier 3
+HCP0125,Dr. D_3,Radiation Oncology,South,Tier 2
+HCP0133,Dr. E_4,Medical Oncology,Central,Tier 2
+HCP0031,Dr. F_5,Medical Oncology,Central,Tier 1
+HCP0142,Dr. G_6,Hematology-Oncology,North,Tier 1
+HCP0135,Dr. H_7,Medical Oncology,North,Tier 1
+HCP0054,Dr. I_8,Radiation Oncology,South,Tier 3
+HCP0013,Dr. J_9,Medical Oncology,Central,Tier 2
+HCP0098,Dr. A_10,Radiation Oncology,Central,Tier 2
