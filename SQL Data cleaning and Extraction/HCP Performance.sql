@@ -1,34 +1,27 @@
+SELECT TOP 10 * FROM hcp;
+SELECT TOP 10 * FROM prescriptions;
+SELECT TOP 10 * FROM vw_Patient_Adherence;
+
+
 WITH starts AS (
     SELECT
         pr.hcp_id,
-        pr.patient_id
+        pr.patient_id,
+		pr.rx_id
     FROM prescriptions pr
-    WHERE CONVERT(date, pr.start_date) BETWEEN '2025-05-01' AND '2025-10-31'
-    GROUP BY pr.hcp_id, pr.patient_id
-),
-patient_pdc AS (
-    SELECT
-        patient_id,
-        CASE
-            WHEN SUM(CAST(quantity_days AS decimal(12,6))) 
-                 / (DATEDIFF(day, '2025-05-01', '2025-10-31') + 1) > 1
-            THEN 1.0
-            ELSE SUM(CAST(quantity_days AS decimal(12,6))) 
-                 / (DATEDIFF(day, '2025-05-01', '2025-10-31') + 1)
-        END AS pdc_est
-    FROM refills
-    WHERE CONVERT(date, refill_date) BETWEEN '2025-05-01' AND '2025-10-31'
-    GROUP BY patient_id
+    WHERE pr.start_date BETWEEN '2025-05-01' AND '2025-10-31'
+    GROUP BY pr.hcp_id, pr.patient_id, pr.rx_id
 )
-SELECT TOP (100)
+SELECT TOP (10)
     h.hcp_id,
     h.name,
     COUNT(DISTINCT s.patient_id) AS new_starts,
-    ROUND(AVG(p.pdc_est), 3) AS avg_pdc_of_new_starts,
-    ROUND(AVG(o.outcome_score), 1) AS avg_outcome_score_of_new_starts
-FROM hcps h
+    ROUND(AVG(a.pdc), 3) AS avg_pdc_of_new_starts,
+    ROUND(AVG(o.outcome_score), 1) AS avg_outcome_score_of_new_starts,
+	AVG(CASE WHEN a.PDC >= 0.8 THEN 1.0 ELSE 0 END) AS adherence_rate
+FROM hcp h
 LEFT JOIN starts s ON s.hcp_id = h.hcp_id
-LEFT JOIN patient_pdc p ON p.patient_id = s.patient_id
+LEFT JOIN vw_Patient_Adherence a ON a.rx_id = s.rx_id
 LEFT JOIN outcomes o ON o.patient_id = s.patient_id
 GROUP BY h.hcp_id, h.name
 ORDER BY new_starts DESC;
@@ -36,14 +29,14 @@ ORDER BY new_starts DESC;
 
 /*
 hcp_id	name	new_starts	avg_pdc_of_new_starts	avg_outcome_score_of_new_starts
-HCP0013	Dr. J_9	1	NULL	75
-HCP0031	Dr. F_5	1	0.152000	73
-HCP0048	Dr. C_2	1	0.815000	84
-HCP0054	Dr. I_8	1	NULL	76
-HCP0090	Dr. B_1	1	0.152000	72
-HCP0098	Dr. A_10	1	NULL	82
-HCP0125	Dr. D_3	1	0.228000	78
-HCP0133	Dr. E_4	1	0.152000	48
-HCP0135	Dr. H_7	1	NULL	65
-HCP0142	Dr. G_6	1	NULL	76
+HCP031	Dr_31	7	0.669	75
+HCP054	Dr_54	6	0.668	76
+HCP062	Dr_62	6	0.518	71
+HCP089	Dr_89	6	0.478	69
+HCP100	Dr_100	6	0.77	75
+HCP144	Dr_144	6	0.651	77
+HCP147	Dr_147	5	0.649	75
+HCP121	Dr_121	5	0.842	74
+HCP122	Dr_122	5	0.603	68
+HCP124	Dr_124	5	0.787	73
 */
