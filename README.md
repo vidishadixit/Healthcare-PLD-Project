@@ -41,55 +41,69 @@ patient_id, outcome_score, hospitalization_flag, followup_visit
 
 ## Analytics
 
+Average patient adherence (PDC) over a 180-day observation window was 0.66, with 25.9% of patients meeting the adherence threshold (PDC ≥ 0.8). 
+Physician-level analysis revealed substantial variation in adherence outcomes, with some HCPs achieving adherence rates above 60–75%, while others with larger patient panels showed rates below 35%.
+
 1. Adherence Analysis (MPR/PDC Calculation)
 
  Calculated:
 
   a. MPR (Medication Possession Ratio)
-  b. PDC (Proportion of Days Covered)
-  c. Using refill data to check if patients are taking the medication consistently.
 
 SQL:
 
 SELECT 
   patient_id,
-  SUM(quantity_days) / COUNT(DISTINCT DATE(refill_date)) AS MPR
-FROM refills
-GROUP BY patient_id;
+  CAST(SUM(quantity_days) AS FLOAT) /
+    NULLIF(DATEDIFF(day,
+                    MIN(refill_date),
+                    MAX(refill_end_date)),0) AS MPR
+FROM 
+   refills
+GROUP BY 
+   patient_id;
+   
+b. PDC (Proportion of Days Covered)
+
+   CASE 
+        WHEN CAST(SUM(quantity_days) AS FLOAT) /
+             NULLIF(180,0) > 1
+        THEN 1
+        ELSE CAST(SUM(quantity_days) AS FLOAT) /
+             NULLIF(180,0)
+    END AS PDC
+ 
+   c. Ever discontinued from medications
+   
 
 2. Persistence Analysis (Time on Therapy)
-
-  a. Defined persistence as gap > 30 days → patient considered discontinued.
-  b. Used SQL window functions to calculate refill gaps.
-
-SELECT 
-  patient_id,
-  refill_date,
-  LAG(refill_date) OVER (PARTITION BY patient_id ORDER BY refill_date) AS prev_refill,
-  DATEDIFF(refill_date, prev_refill) AS gap_days
-FROM refills;
+ Defined persistence as gap > 30 days → patient considered discontinued.
+CASE 
+        WHEN MAX(CASE WHEN gap_days > 30 THEN 1 ELSE 0 END) = 1
+        THEN 1
+        ELSE 0
+    END AS ever_discontinued
 
 3. HCP Performance Profiling
 
 Created HCP segmentation based on:
 
-  a. of new starts
+ a. of new starts: COUNT(DISTINCT s.patient_id) AS new_starts
 
-b. adherence of their patients
+ b. adherence of their patients: AVG(CASE WHEN a.PDC >= 0.8 THEN 1.0 ELSE 0 END) AS adherence_rate
 
-c. outcomes vs peers
+ c. outcomes vs peers: ROUND(AVG(o.outcome_score), 1) AS avg_outcome_score_of_new_starts,
 
-d. specialty-based patterns
-
-This supports cross-functional collaboration (Sales, Medical, Brand Teams).
+During the May–October 2025 observation window, physicians initiated therapy for varying numbers of patients. Average adherence (PDC) ranged from 0.48 to 0.79 across HCPs. Some physicians, such as Dr_41, demonstrated higher adherence levels among their patients, while others showed lower persistence rates. Adherence rates ranged from 0% to 50%, indicating significant variation in patient medication persistence.
 
 4. Patient Outcomes Analysis
 
 a. Merged outcome data with adherence:
 b. Found that PDC > 80% patients had 32% lower hospitalization rate
-c. Created Excel QC sheets to validate anomalies
 
-5. Storytelling Dashboard (Power BI)
+5. Created Excel QC sheets to validate anomalies
+
+6. Storytelling Dashboard (Power BI)
 
 Built dashboards that answer:
 
