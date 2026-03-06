@@ -97,13 +97,21 @@ Created HCP segmentation based on:
 During the May–October 2025 observation window, physicians initiated therapy for varying numbers of patients. Average adherence (PDC) ranged from 0.48 to 0.79 across HCPs. Some physicians, such as Dr_41, demonstrated higher adherence levels among their patients, while others showed lower persistence rates. Adherence rates ranged from 0% to 50%, indicating significant variation in patient medication persistence.
 
 4. Patient Outcomes Analysis
+Merged outcome data with adherence:
+CASE
+        WHEN p.PDC < 0.5 THEN 'Low adherence'
+        WHEN p.PDC < 0.8 THEN 'Moderate adherence'
+        ELSE 'High adherence'
+    END AS adherence_group,
+    COUNT(*) AS patients,
+    AVG(o.hospitalization_flag*1.0) AS hospitalization_rate,
+    AVG(o.outcome_score) AS avg_outcome
+   
+Patients with low medication adherence demonstrated the highest hospitalization rate (54.9%), compared to patients with moderate (47.1%) and high adherence (46.7%). This suggests that poorer medication adherence may be associated with increased hospitalization risk.
 
-a. Merged outcome data with adherence:
-b. Found that PDC > 80% patients had 32% lower hospitalization rate
+6. Created Excel QC sheets to validate anomalies
 
-5. Created Excel QC sheets to validate anomalies
-
-6. Storytelling Dashboard (Power BI)
+7. Storytelling Dashboard (Power BI)
 
 Built dashboards that answer:
 
