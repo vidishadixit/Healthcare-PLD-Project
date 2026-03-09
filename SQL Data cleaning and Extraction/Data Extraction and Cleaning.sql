@@ -403,3 +403,18 @@ SELECT
 	OVER(PARTITION BY patient_id ORDER BY refill_date),refill_date) as gap_days
 FROM
 	refills) t;
+
+WITH cte AS (
+    SELECT 
+        refill_event_id,
+        ROW_NUMBER() OVER(
+            PARTITION BY patient_id
+            ORDER BY refill_date
+        ) AS refillno
+    FROM Refill_Cleaned
+)
+
+UPDATE cte
+SET refill_event_id = refillno;
+
+SELECT * FROM Refill_Cleaned;
